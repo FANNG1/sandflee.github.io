@@ -5,34 +5,28 @@
   
   <title>HDFS笔记 | sandflee blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="##HDFS笔记
-
+  <meta name="description" content="HDFS笔记
 HDFS is designed more for batch processing rather than interactive use by users. The emphasis is on high throughput of data access rather than low latency of data access
 
-###数据模型：
-
-write onc">
+数据模型：
+write once，read">
 <meta property="og:type" content="article">
 <meta property="og:title" content="HDFS笔记">
 <meta property="og:url" content="http://yoursite.com/2016/11/26/hdfs-node/index.html">
 <meta property="og:site_name" content="sandflee blog">
-<meta property="og:description" content="##HDFS笔记
-
+<meta property="og:description" content="HDFS笔记
 HDFS is designed more for batch processing rather than interactive use by users. The emphasis is on high throughput of data access rather than low latency of data access
 
-###数据模型：
-
-write onc">
-<meta property="og:updated_time" content="2016-11-24T14:38:45.000Z">
+数据模型：
+write once，read">
+<meta property="og:updated_time" content="2016-11-24T14:49:32.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="HDFS笔记">
-<meta name="twitter:description" content="##HDFS笔记
-
+<meta name="twitter:description" content="HDFS笔记
 HDFS is designed more for batch processing rather than interactive use by users. The emphasis is on high throughput of data access rather than low latency of data access
 
-###数据模型：
-
-write onc">
+数据模型：
+write once，read">
   
     <link rel="alternate" href="/atom.xml" title="sandflee blog" type="application/atom+xml">
   
@@ -111,17 +105,14 @@ write onc">
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>##HDFS笔记</p>
-<blockquote>
+        <h2 id="HDFS笔记"><a href="#HDFS笔记" class="headerlink" title="HDFS笔记"></a>HDFS笔记</h2><blockquote>
 <p>HDFS is designed more for batch processing rather than interactive use by users. The emphasis is on high throughput of data access rather than low latency of data access</p>
 </blockquote>
-<p>###数据模型：</p>
-<ul>
+<h3 id="数据模型："><a href="#数据模型：" class="headerlink" title="数据模型："></a>数据模型：</h3><ul>
 <li>write once，read many times， 不支持在中间位置写。适合mr批数据处理</li>
 <li>采用名字空间和数据分离的架构，名字空间由namenode维护，数据由datanode维护。提升系统的可扩展性。</li>
 </ul>
-<p>###模块：</p>
-<h4 id="namenode"><a href="#namenode" class="headerlink" title="namenode"></a>namenode</h4><p>nn的元数据由名字空间，文件和block的映射关系（image和edit log的形式持久化），block和datanode的映射关系（datanode动态保存）等组成。</p>
+<h3 id="模块："><a href="#模块：" class="headerlink" title="模块："></a>模块：</h3><h4 id="namenode"><a href="#namenode" class="headerlink" title="namenode"></a>namenode</h4><p>nn的元数据由名字空间，文件和block的映射关系（image和edit log的形式持久化），block和datanode的映射关系（datanode动态保存）等组成。</p>
 <h3 id="datanode"><a href="#datanode" class="headerlink" title="datanode"></a>datanode</h3><p>负责具体的数据存储，维护了block的具体信息</p>
 <h3 id="journalnode"><a href="#journalnode" class="headerlink" title="journalnode"></a>journalnode</h3><p>为namenode edit log提供持久化存储</p>
 <h3 id="数据流："><a href="#数据流：" class="headerlink" title="数据流："></a>数据流：</h3><h4 id="client"><a href="#client" class="headerlink" title="client"></a>client</h4><h5 id="DistributeFileSystem"><a href="#DistributeFileSystem" class="headerlink" title="DistributeFileSystem"></a>DistributeFileSystem</h5><p>提供了对用户的操作接口，create open mkdir remove等，具体跟name node的交互在DFSClient实现。create后返回DFSOutputstream， open返回DFSInputStream</p>
@@ -132,7 +123,7 @@ write onc">
 <li>DateStreamer利用DFSClient向name node请求block locate，以pipeline方式发送</li>
 </ol>
 <h5 id="DFSInputStream"><a href="#DFSInputStream" class="headerlink" title="DFSInputStream"></a>DFSInputStream</h5><p>从namenode取出相应block location，进行读取</p>
-<p>#####DFSClient<br>负责跟namenode协议交互，具体参考ClientProtocol</p>
+<h5 id="DFSClient"><a href="#DFSClient" class="headerlink" title="DFSClient"></a>DFSClient</h5><p>负责跟namenode协议交互，具体参考ClientProtocol</p>
 <h3 id="模块协议："><a href="#模块协议：" class="headerlink" title="模块协议："></a>模块协议：</h3><h4 id="ClientProtocol"><a href="#ClientProtocol" class="headerlink" title="ClientProtocol"></a>ClientProtocol</h4><p>包括create,mkdir, delete等基本的文件接口<br>getBlockLocations（对应open接口）, addBlock（write完成后通过这个接口获取block location信息，实现上将其作为前一个blocks的commit信息），renewlease等hdfs特有接口</p>
 <h4 id="DataNodeProtocol"><a href="#DataNodeProtocol" class="headerlink" title="DataNodeProtocol"></a>DataNodeProtocol</h4><ol>
 <li>registerDataNode  注册datanode</li>
@@ -160,8 +151,7 @@ write onc">
 </blockquote>
 <h4 id="why-pipeline-write？"><a href="#why-pipeline-write？" class="headerlink" title="why pipeline write？"></a>why pipeline write？</h4><p>最小化集群网络开销。如果都在client机器write，对client机器压力比较大。</p>
 <h4 id="为什么不保存机器和block的映射关系？"><a href="#为什么不保存机器和block的映射关系？" class="headerlink" title="为什么不保存机器和block的映射关系？"></a>为什么不保存机器和block的映射关系？</h4><p>We initially attempted to keep chunk location information persistently at the master, but we decided that it was much simpler to request the data from chunkservers at startup, and periodically thereafter. This eliminated the problem of keeping the master and chunkservers in sync as chunkservers join and leave the cluster, change names, fail, restart, and so on</p>
-<p>###问题：</p>
-<ol>
+<h3 id="问题："><a href="#问题：" class="headerlink" title="问题："></a>问题：</h3><ol>
 <li><p>批处理任务启动时，几百个客户端同时读取文件.可以人工调节文件replica</p>
 </li>
 <li><p>程序启动时，同时操作hdfs，本地缓存导致内存暴增。NM</p>
@@ -172,7 +162,7 @@ write onc">
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2016/11/26/hdfs-node/" data-id="civwgtbfg0002ix2lwq2qkild" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2016/11/26/hdfs-node/" data-id="civwh6kvb0007lr2l8n140kag" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/hadoop/">hadoop</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/hdfs/">hdfs</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/存储/">存储</a></li></ul>
