@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>k8s apiserver分析 | sandflee blog</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="k8s apiserver
+The Kubernetes API server validates and configures data for the api objects which include pods, services, replicationcontrollers, and others. The API Server services REST operations and">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s apiserver分析">
+<meta property="og:url" content="http://yoursite.com/2016/10/17/k8s-apiserver/index.html">
+<meta property="og:site_name" content="sandflee blog">
+<meta property="og:description" content="k8s apiserver
+The Kubernetes API server validates and configures data for the api objects which include pods, services, replicationcontrollers, and others. The API Server services REST operations and">
+<meta property="og:updated_time" content="2016-11-24T14:43:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="k8s apiserver分析">
+<meta name="twitter:description" content="k8s apiserver
+The Kubernetes API server validates and configures data for the api objects which include pods, services, replicationcontrollers, and others. The API Server services REST operations and">
+  
+    <link rel="alternate" href="/atom.xml" title="sandflee blog" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+
+</head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">sandflee blog</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">学习 总结 思考</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜索"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://yoursite.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+      <div class="outer">
+        <section id="main"><article id="post-k8s-apiserver" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/10/17/k8s-apiserver/" class="article-date">
+  <time datetime="2016-10-16T16:00:00.000Z" itemprop="datePublished">2016-10-17</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/k8s/">k8s</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      k8s apiserver分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="k8s-apiserver"><a href="#k8s-apiserver" class="headerlink" title="k8s apiserver"></a>k8s apiserver</h1><blockquote>
+<p>The Kubernetes API server validates and configures data for the api objects which include pods, services, replicationcontrollers, and others. The API Server services REST operations and provides the frontend to the cluster’s shared state through which all other components interact.</p>
+</blockquote>
+<h2 id="resource-amp-amp-Group-amp-amp-version"><a href="#resource-amp-amp-Group-amp-amp-version" class="headerlink" title="resource &amp;&amp; Group &amp;&amp; version"></a>resource &amp;&amp; Group &amp;&amp; version</h2><h3 id="resource"><a href="#resource" class="headerlink" title="resource"></a>resource</h3><h4 id="resource描述"><a href="#resource描述" class="headerlink" title="resource描述"></a>resource描述</h4><p>pod service这类对象，etcd上存储的最小单位。<br>一个资源的描述一般包括４部分,</p>
+<ol>
+<li>TypeMeta　资源的元信息，资源的类型，属于哪个Group/version</li>
+<li>ObjectMeta　对象的元信息，对象的名字,label,annotation等</li>
+<li>Spec  对象期望的状态</li>
+<li>Status　对象实际的状态</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">type</span> Pod <span class="keyword">struct</span> &#123;</div><div class="line">	unversioned.TypeMeta <span class="string">`json:",inline"`</span></div><div class="line">	ObjectMeta <span class="string">`json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`</span></div><div class="line">	Spec PodSpec <span class="string">`json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`</span></div><div class="line">	Status PodStatus <span class="string">`json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="Group"><a href="#Group" class="headerlink" title="Group"></a>Group</h3><p>一般类似功能的资源放到一个Group下,比如batch Group下面有job和ScheduledJob. 一些不成熟的会放到extensions</p>
+<h3 id="version"><a href="#version" class="headerlink" title="version"></a>version</h3><p>每一个Group都会有不同version（升级，向前兼容）, resource从属于一个version,version从属于Group,如果要升级到新的version,需要把钱一个version的resource在新version中实现，并创建转换函数负责不同版本间相同resource的convert<br>每个Group都必须提供unversioned的resource,供apiserver和其他模块使用。</p>
+<h2 id="ApiServer分层"><a href="#ApiServer分层" class="headerlink" title="ApiServer分层"></a>ApiServer分层</h2><ol>
+<li>REST接口层，　对用户暴漏REST接口</li>
+<li>resource storage层，具体某个资源的实现．每个REST接口都跟一个storage关联，storage提供了Create/Update/Delete/Get/Watch等接口。一般基于generic#store实现，每种resource只需要实线特定的stratgy,generic#store负责回调.用户只需要关心具体的实现策略即可</li>
+<li>cache层　如果启用–watch-cache，会有额外的cache层(cacher.go)，如果没有启用,generic#store直接操作raw storage</li>
+<li>raw storage层, 跟etcd打交道，有etcd集群信息和版本信息，把数据直接更新到etcd，</li>
+</ol>
+<h3 id="REST接口"><a href="#REST接口" class="headerlink" title="REST接口"></a>REST接口</h3><p>api_installer.go#registerResourceHandlers将resource和具体的RestApi绑定起来．</p>
+<ol>
+<li>创建decoder,decoder负责将version对象字节流decode成unversion对象</li>
+<li>必要时(CREATE/UPDATE/DELETE)进行准入控制</li>
+<li>调用resource storage相关接口（创建调用create,更新调用update等）</li>
+</ol>
+<h3 id="resource-storage层"><a href="#resource-storage层" class="headerlink" title="resource storage层"></a>resource storage层</h3><h4 id="storage向apiserver注册"><a href="#storage向apiserver注册" class="headerlink" title="storage向apiserver注册"></a>storage向apiserver注册</h4><p>每个ApiGroup需要创建ApiGroupInfo,里面包含group的版本，以及每个版本的resource map. ApiServer根据ApiGroup Info将其跟rest接口绑定<br><em>master.go#installApis</em> 作为注册的总入口，创建对应ApiGroup并将其注册</p>
+<h5 id="1-创建ApiGroupInfo"><a href="#1-创建ApiGroupInfo" class="headerlink" title="1. 创建ApiGroupInfo"></a>1. 创建ApiGroupInfo</h5><p>groupMeta为每个Group install.go中注册的GroupMeta, Scheme,ParameterCodec,NegotiatedSerializer为全局变量，不需要额外创建<br>VersionedResourcesStorageMap　记录了每个GroupVersion都要哪些resource,以及对应的storage实现</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">genericApiserver.<span class="keyword">go</span></div><div class="line"></div><div class="line">APIGroupInfo &#123;</div><div class="line">   GroupMeta apimachinery.GroupMeta</div><div class="line">   VersionedResourcesStorageMap [][]rest.Storage</div><div class="line">   IsLegacyGroup <span class="keyword">bool</span></div><div class="line">   OptionsExternalVersion *unversioned.GroupVersion</div><div class="line"></div><div class="line">   Scheme *runtime.Scheme</div><div class="line">   NegotiatedSerializer runtime.NegotiatedSerializer</div><div class="line">   ParameterCodec runtime.ParameterCodec</div><div class="line"></div><div class="line">   SubresourceGroupVersionKind []unversioned.GroupVersionKind</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h5 id="2-从ApiGroupInfo生成ApiGroupVersion，对应每个版本的信息"><a href="#2-从ApiGroupInfo生成ApiGroupVersion，对应每个版本的信息" class="headerlink" title="2. 从ApiGroupInfo生成ApiGroupVersion，对应每个版本的信息"></a>2. 从ApiGroupInfo生成ApiGroupVersion，对应每个版本的信息</h5><p>apiGroupInfo对应的是一个ApiGroup的信息，ApiGroupVersion对应其中一个特定版本<br><figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *GenericAPIServer)</span> <span class="title">newAPIGroupVersion</span><span class="params">(apiGroupInfo *APIGroupInfo, groupVersion unversioned.GroupVersion)</span> <span class="params">(*apiserver.APIGroupVersion, error)</span></span> &#123;</div><div class="line">	<span class="keyword">return</span> &amp;apiserver.APIGroupVersion&#123;</div><div class="line">		RequestInfoResolver: s.NewRequestInfoResolver(),</div><div class="line"></div><div class="line">		GroupVersion: groupVersion,</div><div class="line"></div><div class="line">		ParameterCodec: apiGroupInfo.ParameterCodec,</div><div class="line">		Serializer:     apiGroupInfo.NegotiatedSerializer,</div><div class="line">		Creater:        apiGroupInfo.Scheme,</div><div class="line">		Convertor:      apiGroupInfo.Scheme,</div><div class="line">		Copier:         apiGroupInfo.Scheme,</div><div class="line">		Typer:          apiGroupInfo.Scheme,</div><div class="line">		SubresourceGroupVersionKind: apiGroupInfo.SubresourceGroupVersionKind,</div><div class="line">		Linker: apiGroupInfo.GroupMeta.SelfLinker,</div><div class="line">		Mapper: apiGroupInfo.GroupMeta.RESTMapper,</div><div class="line"></div><div class="line">		Admit:             s.AdmissionControl,</div><div class="line">		Context:           s.RequestContextMapper,</div><div class="line">		MinRequestTimeout: s.MinRequestTimeout,</div><div class="line">	&#125;, <span class="literal">nil</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h5 id="3-ApiGroupVersion中的每个资源注册到apiserver"><a href="#3-ApiGroupVersion中的每个资源注册到apiserver" class="headerlink" title="3. ApiGroupVersion中的每个资源注册到apiserver"></a>3. ApiGroupVersion中的每个资源注册到apiserver</h5><p>api_installer.go#registerResourceHandlers把下面storage中的resource和storage做绑定<br><figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">petsetStorage, petsetStatusStorage := petsetetcd.NewREST(restOptionsGetter(apps.Resource(<span class="string">"petsets"</span>)))</div><div class="line">storage[<span class="string">"petsets"</span>] = petsetStorage</div></pre></td></tr></table></figure></p>
+<h4 id="generic-storage实现"><a href="#generic-storage实现" class="headerlink" title="generic storage实现"></a>generic storage实现</h4><p>generic storerage在进行实际的etcd操作前进行了很多hook,用户只需要实线具体的stratery即可<br>其具体实现在<em>generic/registry/store.go</em></p>
+<h5 id="create"><a href="#create" class="headerlink" title="create"></a>create</h5><ol>
+<li>执行rest#BeforeCreate，<br>1.1 strategy.PrepareForCreate<br>1.2 创建uuid,如果没有名字产生名字<br>1.3 strategy.Validate验证资源的合法性</li>
+<li>底层storage执行create</li>
+<li>执行AfterCreate回调</li>
+</ol>
+<h5 id="update-todo"><a href="#update-todo" class="headerlink" title="update  todo"></a>update  todo</h5><h5 id="Delete-todo"><a href="#Delete-todo" class="headerlink" title="Delete  todo"></a>Delete  todo</h5><h5 id="Get-todo"><a href="#Get-todo" class="headerlink" title="Get todo"></a>Get todo</h5><h5 id="rest-策略层"><a href="#rest-策略层" class="headerlink" title="rest　策略层"></a>rest　策略层</h5><p>提供了BeforeUpdate/BeforeCreate/BeforeDelete的实现，会回调每个资源的一些创建，更新策略<br><figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">type</span> RESTCreateStrategy <span class="keyword">interface</span> &#123;</div><div class="line">	runtime.ObjectTyper</div><div class="line">	<span class="comment">// The name generate is used when the standard GenerateName field is set.</span></div><div class="line">	<span class="comment">// The NameGenerator will be invoked prior to validation.</span></div><div class="line">	api.NameGenerator</div><div class="line"></div><div class="line">	<span class="comment">// NamespaceScoped returns true if the object must be within a namespace.</span></div><div class="line">	NamespaceScoped() <span class="keyword">bool</span></div><div class="line">	<span class="comment">// PrepareForCreate is invoked on create before validation to normalize</span></div><div class="line">	<span class="comment">// the object.  For example: remove fields that are not to be persisted,</span></div><div class="line">	<span class="comment">// sort order-insensitive list fields, etc.  This should not remove fields</span></div><div class="line">	<span class="comment">// whose presence would be considered a validation error.</span></div><div class="line">	PrepareForCreate(ctx api.Context, obj runtime.Object)</div><div class="line">	<span class="comment">// Validate is invoked after default fields in the object have been filled in before</span></div><div class="line">	<span class="comment">// the object is persisted.  This method should not mutate the object.</span></div><div class="line">	Validate(ctx api.Context, obj runtime.Object) field.ErrorList</div><div class="line">	<span class="comment">// Canonicalize is invoked after validation has succeeded but before the</span></div><div class="line">	<span class="comment">// object has been persisted.  This method may mutate the object.</span></div><div class="line">	Canonicalize(obj runtime.Object)</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">type</span> RESTGracefulDeleteStrategy <span class="keyword">interface</span> &#123;</div><div class="line">	<span class="comment">// CheckGracefulDelete should return true if the object can be gracefully deleted and set</span></div><div class="line">	<span class="comment">// any default values on the DeleteOptions.</span></div><div class="line">	CheckGracefulDelete(ctx api.Context, obj runtime.Object, options *api.DeleteOptions) <span class="keyword">bool</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">type</span> RESTUpdateStrategy <span class="keyword">interface</span> &#123;</div><div class="line">	runtime.ObjectTyper</div><div class="line">	<span class="comment">// NamespaceScoped returns true if the object must be within a namespace.</span></div><div class="line">	NamespaceScoped() <span class="keyword">bool</span></div><div class="line">	<span class="comment">// AllowCreateOnUpdate returns true if the object can be created by a PUT.</span></div><div class="line">	AllowCreateOnUpdate() <span class="keyword">bool</span></div><div class="line">	<span class="comment">// PrepareForUpdate is invoked on update before validation to normalize</span></div><div class="line">	<span class="comment">// the object.  For example: remove fields that are not to be persisted,</span></div><div class="line">	<span class="comment">// sort order-insensitive list fields, etc.  This should not remove fields</span></div><div class="line">	<span class="comment">// whose presence would be considered a validation error.</span></div><div class="line">	PrepareForUpdate(ctx api.Context, obj, old runtime.Object)</div><div class="line">	<span class="comment">// ValidateUpdate is invoked after default fields in the object have been</span></div><div class="line">	<span class="comment">// filled in before the object is persisted.  This method should not mutate</span></div><div class="line">	<span class="comment">// the object.</span></div><div class="line">	ValidateUpdate(ctx api.Context, obj, old runtime.Object) field.ErrorList</div><div class="line">	<span class="comment">// Canonicalize is invoked after validation has succeeded but before the</span></div><div class="line">	<span class="comment">// object has been persisted.  This method may mutate the object.</span></div><div class="line">	Canonicalize(obj runtime.Object)</div><div class="line">	<span class="comment">// AllowUnconditionalUpdate returns true if the object can be updated</span></div><div class="line">	<span class="comment">// unconditionally (irrespective of the latest resource version), when</span></div><div class="line">	<span class="comment">// there is no resource version specified in the object.</span></div><div class="line">	AllowUnconditionalUpdate() <span class="keyword">bool</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3 id="cacher层"><a href="#cacher层" class="headerlink" title="cacher层"></a>cacher层</h3><p>对watch请求进行cache,其他的Get/Update/Create/Delete直接走raw storage层．</p>
+<h4 id="创建storage"><a href="#创建storage" class="headerlink" title="创建storage"></a>创建storage</h4><p>master.go 创建generic.RESTOptions时，通过storageDecorator赋值给Decorator</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">genericapiserver.<span class="keyword">go</span></div><div class="line"><span class="function"><span class="keyword">func</span> <span class="params">(s *GenericAPIServer)</span> <span class="title">StorageDecorator</span><span class="params">()</span> <span class="title">generic</span>.<span class="title">StorageDecorator</span></span> &#123;</div><div class="line">	<span class="keyword">if</span> s.enableWatchCache &#123;</div><div class="line">		<span class="keyword">return</span> registry.StorageWithCacher</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> generic.UndecoratedStorage</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">master.<span class="keyword">go</span></div><div class="line">generic.RESTOptions&#123;</div><div class="line">		StorageConfig:           storageConfig,</div><div class="line">		Decorator:               m.StorageDecorator(),</div><div class="line">		DeleteCollectionWorkers: m.deleteCollectionWorkers,</div><div class="line">		ResourcePrefix:          c.StorageFactory.ResourcePrefix(resource),</div><div class="line">	&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">type</span> RESTOptions <span class="keyword">struct</span> &#123;</div><div class="line">     <span class="comment">// etcd相关配置，etcd2/etcd3? etcd location/prefix等，还包括codec, resource memory version和storageVersion相互转换</span></div><div class="line">	StorageConfig           *storagebackend.Config</div><div class="line">    <span class="comment">// storage的修饰器，返回一个func，生成具体的storage接口，分为storageWithCacher和UndecodedStorage</span></div><div class="line">	Decorator               StorageDecorator</div><div class="line">	DeleteCollectionWorkers <span class="keyword">int</span></div><div class="line"></div><div class="line">	ResourcePrefix <span class="keyword">string</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>每个Group都需要创建store对象，调用RestOptions.Decorator生成storage(cacher or raw)</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">   registry#tapp/etcd#etcd.<span class="keyword">go</span></div><div class="line">storageInterface, _ := opts.Decorator(</div><div class="line">	opts.StorageConfig,</div><div class="line">	cachesize.GetWatchCacheSizeByResource(cachesize.TApp),</div><div class="line">	&amp;gaiaapi.TApp&#123;&#125;,</div><div class="line">	prefix,</div><div class="line">	tapp.Strategy,</div><div class="line">	newListFunc,</div><div class="line">	storage.NoTriggerPublisher,</div><div class="line">)</div><div class="line">   store := &amp;registry.Store&#123;</div><div class="line">     Storage: storageInterface,</div><div class="line">   &#125;</div></pre></td></tr></table></figure>
+<h4 id="cacher实现-todo"><a href="#cacher实现-todo" class="headerlink" title="cacher实现 todo"></a>cacher实现 todo</h4><h3 id="raw-storage层"><a href="#raw-storage层" class="headerlink" title="raw storage层"></a>raw storage层</h3><p>etcd　lib的具体实现．etcd2的实线在storage/etcd_helper.go, etcd3的实线在storage／etcd3/store.go<br>Note:<br>1.具体存储前调用encoder将unversion resource转换成version　resource字节流<br>2.没有字段存储ResourceVersion，采用etcd modify index.</p>
+<h2 id="what-happend-when-create-a-resource？"><a href="#what-happend-when-create-a-resource？" class="headerlink" title="what happend when create a resource？"></a>what happend when create a resource？</h2><ol>
+<li>客户端通过RestApi请求创建petset</li>
+<li>apiserver 执行回调函数restHandler#createHandler, 将字节流转换成unversion resource object,通过准入控制后，执行generic#store.Create</li>
+<li>generic#store.create　流程参见前面描述，调用cacher#create</li>
+<li>cacher#create不做处理直接调用raw storage回调，如果为etcd2执行etcd_helper#create</li>
+<li>raw storage etcd helper将unversion object转换为versioned object并存储在etcd</li>
+<li>raw storage 将etcd返回的value decode成unversion resource, 并根据返回的modifyIndex设置对象的resourceVersion</li>
+<li>generic#store 执行AfterCreate回调</li>
+<li>apiserver　将unversion resource转换为version resource并返回</li>
+</ol>
+<p>###scheme 记录GroupVersionKind和type的映射关系<br>主要用于不同version resource的相互转换<br>重要接口：</p>
+<ol>
+<li>addKnownTypes　</li>
+<li>addDefaultFuncs</li>
+<li>addConversionFuncs    </li>
+<li>AddFieldLabelConversionFunc　　　field label?</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2016/10/17/k8s-apiserver/" data-id="civwgtbfn000bix2l2fxmosvd" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/apiserver/">apiserver</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/11/24/hello/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          First blog
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/09/26/controller-manager/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">k8s controller manager分析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/hadoop/">hadoop</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s/">k8s</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/apiserver/">apiserver</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/controller/">controller</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hadoop/">hadoop</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hdfs/">hdfs</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/">k8s</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/存储/">存储</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/apiserver/" style="font-size: 10px;">apiserver</a> <a href="/tags/controller/" style="font-size: 10px;">controller</a> <a href="/tags/hadoop/" style="font-size: 10px;">hadoop</a> <a href="/tags/hdfs/" style="font-size: 10px;">hdfs</a> <a href="/tags/k8s/" style="font-size: 20px;">k8s</a> <a href="/tags/存储/" style="font-size: 10px;">存储</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">十一月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/09/">九月 2016</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/11/26/hdfs-node/">HDFS笔记</a>
+          </li>
+        
+          <li>
+            <a href="/2016/11/24/hello/">First blog</a>
+          </li>
+        
+          <li>
+            <a href="/2016/10/17/k8s-apiserver/">k8s apiserver分析</a>
+          </li>
+        
+          <li>
+            <a href="/2016/09/26/controller-manager/">k8s controller manager分析</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 sandflee<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+
+  </div>
+</body>
+</html>
