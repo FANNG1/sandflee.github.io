@@ -65,6 +65,61 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-tracepoint" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/12/20/tracepoint/" class="article-date">
+  <time datetime="2016-12-19T16:00:00.000Z" itemprop="datePublished">2016-12-20</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/tools/">tools</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/12/20/tracepoint/">利用tracepoint查看系统调用相关信息</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="利用tracepoint查看系统调用相关信息"><a href="#利用tracepoint查看系统调用相关信息" class="headerlink" title="利用tracepoint查看系统调用相关信息"></a>利用tracepoint查看系统调用相关信息</h2><p>线上机器出现大量socket TIME_WAIT,netstat 发现本地有进程一直在连接container export端口.但netstat lsof都找不到哪个在连接.<br>zhiguo介绍了tracepoint工具.</p>
+<h3 id="step"><a href="#step" class="headerlink" title="step"></a>step</h3><ol>
+<li>mount发现debugfs已经mount debugfs on /sys/kernel/debug type debugfs (rw,relatime)</li>
+<li>查看是否支持connect,  cat /sys/kernel/debug/tracing/available_events | grep connect  –&gt; syscalls:sys_exit_connect<br>syscalls:sys_enter_connect</li>
+<li>开启connect的trace, echo 1 &gt; /sys/kernel/debug/tracing/events/syscalls/sys_enter_connect/enable</li>
+<li>查看output, cat /sys/kernel/debug/tracing/trace, 发现haproxy一直在connect,进行健康探测</li>
+<li>关闭trace,echo 0 &gt; /sys/kernel/debug/tracing/events/syscalls/sys_enter_connect/enable</li>
+</ol>
+<h3 id="other"><a href="#other" class="headerlink" title="other"></a>other</h3><ol>
+<li>tracepoint基于内核kprobe机制, 基本原理在调用时hook</li>
+<li>systemtap 提供了更强大的可编程支持</li>
+</ol>
+<p><a href="https://www.kernel.org/doc/Documentation/trace/tracepoints.txt" target="_blank" rel="external">https://www.kernel.org/doc/Documentation/trace/tracepoints.txt</a><br><a href="http://blog.csdn.net/trochiluses/article/details/10185951t" target="_blank" rel="external">http://blog.csdn.net/trochiluses/article/details/10185951t</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2016/12/20/tracepoint/" data-id="ciwxlcg8m00008t2lv34i5dsh" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/">linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/tool/">tool</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+  
     <article id="post-hdfs-node" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2016/11/26/hdfs-node/" class="article-date">
@@ -148,48 +203,11 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2016/11/26/hdfs-node/" data-id="civwh6kvb0007lr2l8n140kag" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2016/11/26/hdfs-node/" data-id="ciwxlcg94000e8t2lr3ytvhbh" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/hadoop/">hadoop</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/hdfs/">hdfs</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/存储/">存储</a></li></ul>
 
-    </footer>
-  </div>
-  
-</article>
-
-
-  
-    <article id="post-hello" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2016/11/24/hello/" class="article-date">
-  <time datetime="2016-11-24T14:49:44.234Z" itemprop="datePublished">2016-11-24</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/11/24/hello/">First blog</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>贵在坚持</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://yoursite.com/2016/11/24/hello/" data-id="civwh6kvf000glr2l906zpd7k" class="article-share-link">Share</a>
-      
-      
     </footer>
   </div>
   
@@ -291,7 +309,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2016/10/17/k8s-apiserver/" data-id="civwh6kvh000hlr2lef5u03so" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2016/10/17/k8s-apiserver/" data-id="ciwxlcg97000n8t2lj9gd5zki" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/apiserver/">apiserver</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li></ul>
@@ -555,7 +573,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://yoursite.com/2016/09/26/controller-manager/" data-id="civwh6kv40000lr2l0mbji4bw" class="article-share-link">Share</a>
+      <a data-url="http://yoursite.com/2016/09/26/controller-manager/" data-id="ciwxlcg9100078t2l78d4wfqa" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/controller/">controller</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/k8s/">k8s</a></li></ul>
@@ -576,7 +594,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">分类</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/hadoop/">hadoop</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s/">k8s</a></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/hadoop/">hadoop</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/k8s/">k8s</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/tools/">tools</a></li></ul>
     </div>
   </div>
 
@@ -586,7 +604,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/apiserver/">apiserver</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/controller/">controller</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hadoop/">hadoop</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hdfs/">hdfs</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/">k8s</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/存储/">存储</a></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/apiserver/">apiserver</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/controller/">controller</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hadoop/">hadoop</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/hdfs/">hdfs</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/">k8s</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/">linux</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tool/">tool</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/存储/">存储</a></li></ul>
     </div>
   </div>
 
@@ -596,7 +614,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">标签云</h3>
     <div class="widget tagcloud">
-      <a href="/tags/apiserver/" style="font-size: 10px;">apiserver</a> <a href="/tags/controller/" style="font-size: 10px;">controller</a> <a href="/tags/hadoop/" style="font-size: 10px;">hadoop</a> <a href="/tags/hdfs/" style="font-size: 10px;">hdfs</a> <a href="/tags/k8s/" style="font-size: 20px;">k8s</a> <a href="/tags/存储/" style="font-size: 10px;">存储</a>
+      <a href="/tags/apiserver/" style="font-size: 10px;">apiserver</a> <a href="/tags/controller/" style="font-size: 10px;">controller</a> <a href="/tags/hadoop/" style="font-size: 10px;">hadoop</a> <a href="/tags/hdfs/" style="font-size: 10px;">hdfs</a> <a href="/tags/k8s/" style="font-size: 20px;">k8s</a> <a href="/tags/linux/" style="font-size: 10px;">linux</a> <a href="/tags/tool/" style="font-size: 10px;">tool</a> <a href="/tags/存储/" style="font-size: 10px;">存储</a>
     </div>
   </div>
 
@@ -605,7 +623,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">归档</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">十一月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/09/">九月 2016</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/12/">十二月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/11/">十一月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/10/">十月 2016</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/09/">九月 2016</a></li></ul>
     </div>
   </div>
 
@@ -618,11 +636,11 @@
       <ul>
         
           <li>
-            <a href="/2016/11/26/hdfs-node/">HDFS笔记</a>
+            <a href="/2016/12/20/tracepoint/">利用tracepoint查看系统调用相关信息</a>
           </li>
         
           <li>
-            <a href="/2016/11/24/hello/">First blog</a>
+            <a href="/2016/11/26/hdfs-node/">HDFS笔记</a>
           </li>
         
           <li>

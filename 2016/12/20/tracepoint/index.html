@@ -3,14 +3,24 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Tag: hadoop | sandflee blog</title>
+  <title>利用tracepoint查看系统调用相关信息 | sandflee blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="sandflee blog">
-<meta property="og:url" content="http://yoursite.com/tags/hadoop/index.html">
+  <meta name="description" content="利用tracepoint查看系统调用相关信息线上机器出现大量socket TIME_WAIT,netstat 发现本地有进程一直在连接container export端口.但netstat lsof都找不到哪个在连接.zhiguo介绍了tracepoint工具.
+step
+mount发现debugfs已经mount debugfs on /sys/kernel/debug type debugfs">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用tracepoint查看系统调用相关信息">
+<meta property="og:url" content="http://yoursite.com/2016/12/20/tracepoint/index.html">
 <meta property="og:site_name" content="sandflee blog">
+<meta property="og:description" content="利用tracepoint查看系统调用相关信息线上机器出现大量socket TIME_WAIT,netstat 发现本地有进程一直在连接container export端口.但netstat lsof都找不到哪个在连接.zhiguo介绍了tracepoint工具.
+step
+mount发现debugfs已经mount debugfs on /sys/kernel/debug type debugfs">
+<meta property="og:updated_time" content="2016-12-20T14:11:31.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="sandflee blog">
+<meta name="twitter:title" content="利用tracepoint查看系统调用相关信息">
+<meta name="twitter:description" content="利用tracepoint查看系统调用相关信息线上机器出现大量socket TIME_WAIT,netstat 发现本地有进程一直在连接container export端口.但netstat lsof都找不到哪个在连接.zhiguo介绍了tracepoint工具.
+step
+mount发现debugfs已经mount debugfs on /sys/kernel/debug type debugfs">
   
     <link rel="alternate" href="/atom.xml" title="sandflee blog" type="application/atom+xml">
   
@@ -63,39 +73,70 @@
   </div>
 </header>
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2016" class="archive-year">2016</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/11/26/hdfs-node/" class="archive-article-date">
-  <time datetime="2016-11-25T16:00:00.000Z" itemprop="datePublished">11月 26</time>
+        <section id="main"><article id="post-tracepoint" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/12/20/tracepoint/" class="article-date">
+  <time datetime="2016-12-19T16:00:00.000Z" itemprop="datePublished">2016-12-20</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/tools/">tools</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/11/26/hdfs-node/">HDFS笔记</a>
+    <h1 class="article-title" itemprop="name">
+      利用tracepoint查看系统调用相关信息
     </h1>
   
 
-    </header>
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="利用tracepoint查看系统调用相关信息"><a href="#利用tracepoint查看系统调用相关信息" class="headerlink" title="利用tracepoint查看系统调用相关信息"></a>利用tracepoint查看系统调用相关信息</h2><p>线上机器出现大量socket TIME_WAIT,netstat 发现本地有进程一直在连接container export端口.但netstat lsof都找不到哪个在连接.<br>zhiguo介绍了tracepoint工具.</p>
+<h3 id="step"><a href="#step" class="headerlink" title="step"></a>step</h3><ol>
+<li>mount发现debugfs已经mount debugfs on /sys/kernel/debug type debugfs (rw,relatime)</li>
+<li>查看是否支持connect,  cat /sys/kernel/debug/tracing/available_events | grep connect  –&gt; syscalls:sys_exit_connect<br>syscalls:sys_enter_connect</li>
+<li>开启connect的trace, echo 1 &gt; /sys/kernel/debug/tracing/events/syscalls/sys_enter_connect/enable</li>
+<li>查看output, cat /sys/kernel/debug/tracing/trace, 发现haproxy一直在connect,进行健康探测</li>
+<li>关闭trace,echo 0 &gt; /sys/kernel/debug/tracing/events/syscalls/sys_enter_connect/enable</li>
+</ol>
+<h3 id="other"><a href="#other" class="headerlink" title="other"></a>other</h3><ol>
+<li>tracepoint基于内核kprobe机制, 基本原理在调用时hook</li>
+<li>systemtap 提供了更强大的可编程支持</li>
+</ol>
+<p><a href="https://www.kernel.org/doc/Documentation/trace/tracepoints.txt" target="_blank" rel="external">https://www.kernel.org/doc/Documentation/trace/tracepoints.txt</a><br><a href="http://blog.csdn.net/trochiluses/article/details/10185951t" target="_blank" rel="external">http://blog.csdn.net/trochiluses/article/details/10185951t</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://yoursite.com/2016/12/20/tracepoint/" data-id="ciwxlcg8m00008t2lv34i5dsh" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/linux/">linux</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/tool/">tool</a></li></ul>
+
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/11/26/hdfs-node/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">HDFS笔记</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-  
-    </div></section>
-  
 
 </section>
         
